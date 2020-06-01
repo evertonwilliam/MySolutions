@@ -12,12 +12,20 @@ namespace ApiWindows
         #region INIT PROGRAM
         public FPrincipal()
         {
-             InitializeComponent();
+            InitializeComponent();
         }
         #endregion
 
         #region IMPORTACAO WIN32 WINDOWS API
 
+        /*
+        * FUNCAO QUE IDENTIFICA UMA TECLA PRESSIONADA FORA DA GUI
+        */
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        private static extern short GetAsyncKeyState(int vKey);
+        
+        private const int VK_CONTROL = 0x11;    // ESC
+        
         // Recupera uma alça na janela que contém o ponto especificado.
         [DllImport("user32.dll")]
         public static extern IntPtr WindowFromPoint(Point point);
@@ -153,6 +161,26 @@ namespace ApiWindows
         [DllImport("user32.dll")]
         public static extern Int32 ReleaseDC(IntPtr hWnd, IntPtr hdc);
 
+        /*
+         * Capturando o objeto em focus()
+         */
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Winapi)]
+        internal static extern IntPtr GetFocus();
+
+        private Control GetFocusedControl(IntPtr window)
+        {
+            Control focusedControl;
+            window = GetFocus();
+            focusedControl = null;
+
+            if (window != IntPtr.Zero)
+            {
+                focusedControl = Control.FromHandle(window);
+                return focusedControl;
+            }
+            return focusedControl;
+        }
+
         #endregion
 
         #region IMPORTACAO GDI WINDOWS API
@@ -178,6 +206,7 @@ namespace ApiWindows
             int length = GetWindowTextLength(window);
             string textWindow = GetWindowText(window);
             string className = GetClassName(window);
+            Control focus = GetFocusedControl(newWindow);
 
 
             // AMBIENTE VISUAL
@@ -194,6 +223,7 @@ namespace ApiWindows
             TxtLenght.Text = length.ToString();
             txtTextWindow.Text = textWindow;
             TxtClassName.Text = className;
+            TxtControlFocus.Text = focus.Name;
 
             #endregion
 
@@ -213,10 +243,11 @@ namespace ApiWindows
         // AO PRESSIONAR A TELA CTRL
         private void FPrincipal_KeyDown(object sender, KeyEventArgs e)
         {
+            /*
             if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
             {
                 Screen();
-            }
+            }*/
         }
 
         // Ao soltar a tecla CTRL
@@ -225,6 +256,21 @@ namespace ApiWindows
             // libere o contexto do dispositivo e destrua a caneta
             //ReleaseDC(window, dc);
         }
+
+        private void TListemKey_Tick(object sender, EventArgs e)
+        {
+            short keyState = GetAsyncKeyState(VK_CONTROL);
+            bool ctrlIsPressed = ((keyState >> 15) & 0x0001) == 0x0001;
+            //bool escUnProcessedPress = ((keyState >> 0) & 0x0001) == 0x0001;
+
+            if (ctrlIsPressed)
+            {
+                Screen();
+            }
+        }
+
         #endregion
+
+
     }
 }

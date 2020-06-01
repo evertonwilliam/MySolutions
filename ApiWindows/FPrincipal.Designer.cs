@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FPrincipal));
             this.MainMenu = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -64,6 +65,9 @@
             this.txtTextWindow = new System.Windows.Forms.TextBox();
             this.LbClassNama = new System.Windows.Forms.Label();
             this.TxtClassName = new System.Windows.Forms.TextBox();
+            this.TxtControlFocus = new System.Windows.Forms.TextBox();
+            this.LControlFocus = new System.Windows.Forms.Label();
+            this.TListemKey = new System.Windows.Forms.Timer(this.components);
             this.MainMenu.SuspendLayout();
             this.ToolPrincipal.SuspendLayout();
             this.TbControlPrincipal.SuspendLayout();
@@ -77,7 +81,7 @@
             this.fileToolStripMenuItem});
             this.MainMenu.Location = new System.Drawing.Point(0, 0);
             this.MainMenu.Name = "MainMenu";
-            this.MainMenu.Size = new System.Drawing.Size(782, 28);
+            this.MainMenu.Size = new System.Drawing.Size(782, 30);
             this.MainMenu.TabIndex = 0;
             // 
             // fileToolStripMenuItem
@@ -85,7 +89,7 @@
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 24);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 26);
             this.fileToolStripMenuItem.Text = "&File";
             // 
             // exitToolStripMenuItem
@@ -100,9 +104,9 @@
             this.ToolPrincipal.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.ToolPrincipal.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.TBtExit});
-            this.ToolPrincipal.Location = new System.Drawing.Point(0, 28);
+            this.ToolPrincipal.Location = new System.Drawing.Point(0, 30);
             this.ToolPrincipal.Name = "ToolPrincipal";
-            this.ToolPrincipal.Size = new System.Drawing.Size(782, 27);
+            this.ToolPrincipal.Size = new System.Drawing.Size(782, 31);
             this.ToolPrincipal.TabIndex = 2;
             // 
             // TBtExit
@@ -111,7 +115,7 @@
             this.TBtExit.Image = ((System.Drawing.Image)(resources.GetObject("TBtExit.Image")));
             this.TBtExit.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.TBtExit.Name = "TBtExit";
-            this.TBtExit.Size = new System.Drawing.Size(29, 24);
+            this.TBtExit.Size = new System.Drawing.Size(29, 28);
             this.TBtExit.Text = "Exit";
             // 
             // TbControlPrincipal
@@ -119,14 +123,16 @@
             this.TbControlPrincipal.Controls.Add(this.tabPage1);
             this.TbControlPrincipal.Controls.Add(this.tabPage2);
             this.TbControlPrincipal.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.TbControlPrincipal.Location = new System.Drawing.Point(0, 55);
+            this.TbControlPrincipal.Location = new System.Drawing.Point(0, 61);
             this.TbControlPrincipal.Name = "TbControlPrincipal";
             this.TbControlPrincipal.SelectedIndex = 0;
-            this.TbControlPrincipal.Size = new System.Drawing.Size(782, 262);
+            this.TbControlPrincipal.Size = new System.Drawing.Size(782, 256);
             this.TbControlPrincipal.TabIndex = 3;
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.LControlFocus);
+            this.tabPage1.Controls.Add(this.TxtControlFocus);
             this.tabPage1.Controls.Add(this.TxtClassName);
             this.tabPage1.Controls.Add(this.LbClassNama);
             this.tabPage1.Controls.Add(this.txtTextWindow);
@@ -156,7 +162,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(774, 233);
+            this.tabPage1.Size = new System.Drawing.Size(774, 227);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Data 1";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -388,6 +394,28 @@
             this.TxtClassName.Size = new System.Drawing.Size(100, 22);
             this.TxtClassName.TabIndex = 25;
             // 
+            // TxtControlFocus
+            // 
+            this.TxtControlFocus.Location = new System.Drawing.Point(231, 134);
+            this.TxtControlFocus.Name = "TxtControlFocus";
+            this.TxtControlFocus.Size = new System.Drawing.Size(232, 22);
+            this.TxtControlFocus.TabIndex = 26;
+            // 
+            // LControlFocus
+            // 
+            this.LControlFocus.AutoSize = true;
+            this.LControlFocus.Location = new System.Drawing.Point(228, 113);
+            this.LControlFocus.Name = "LControlFocus";
+            this.LControlFocus.Size = new System.Drawing.Size(91, 17);
+            this.LControlFocus.TabIndex = 27;
+            this.LControlFocus.Text = "ControlFocus";
+            // 
+            // TListemKey
+            // 
+            this.TListemKey.Enabled = true;
+            this.TListemKey.Interval = 10;
+            this.TListemKey.Tick += new System.EventHandler(this.TListemKey_Tick);
+            // 
             // FPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -397,6 +425,7 @@
             this.Controls.Add(this.TbControlPrincipal);
             this.Controls.Add(this.ToolPrincipal);
             this.Controls.Add(this.MainMenu);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
             this.MainMenuStrip = this.MainMenu;
             this.Name = "FPrincipal";
@@ -452,6 +481,9 @@
         private System.Windows.Forms.Label LTextWindow;
         private System.Windows.Forms.TextBox TxtClassName;
         private System.Windows.Forms.Label LbClassNama;
+        private System.Windows.Forms.Label LControlFocus;
+        private System.Windows.Forms.TextBox TxtControlFocus;
+        private System.Windows.Forms.Timer TListemKey;
     }
 }
 
