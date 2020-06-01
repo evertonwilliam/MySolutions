@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -10,6 +8,7 @@ namespace MouseMove
 {
     public partial class FPrincipal : Form
     {
+        #region Importar API
         /*
          * FUNCAO QUE IDENTIFICA UMA TECLA PRESSIONADA FORA DA GUI
          */
@@ -28,6 +27,10 @@ namespace MouseMove
          */
         [DllImport("user32.dll")]
         private static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
+
+        #endregion
+
+        #region Declaracao de variaveis e constantes
 
         /*
          * CONSTANTES QUE RETRATAM AS ACOES DO MOUSE
@@ -48,15 +51,16 @@ namespace MouseMove
         private Thread initRobo;
         private Thread listenKeyPress;
 
-        /*
-         * INICIO DA APLICAÇÃO
-         */
+        #endregion
 
+        #region Init System
         public FPrincipal()
         {
             InitializeComponent();
         }
+        #endregion
 
+        #region Procedimentos Especiais
         private void InitProcess()
         {
             try
@@ -94,7 +98,6 @@ namespace MouseMove
             {
                 SStatusLabel.Text = ex.Message;
             }
-
         }
 
         private void ListenKeyPressed()
@@ -115,11 +118,9 @@ namespace MouseMove
             SStatusLabel.Text = "Status: Parado";
             initRobo.Abort();
         }
+        #endregion
 
-        /*
-         * ACTIONS
-         */
-
+        #region Ações do Software
         private void BExecute_Click(object sender, System.EventArgs e)
         {
             try
@@ -161,5 +162,6 @@ namespace MouseMove
 
 
         }
+        #endregion
     }
 }

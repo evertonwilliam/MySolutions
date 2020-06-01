@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FPrincipal));
             this.BExecute = new System.Windows.Forms.Button();
             this.TQtdeVezes = new System.Windows.Forms.TextBox();
             this.LQuantidadeVezes = new System.Windows.Forms.Label();
@@ -109,6 +110,7 @@
             this.Controls.Add(this.LQuantidadeVezes);
             this.Controls.Add(this.TQtdeVezes);
             this.Controls.Add(this.BExecute);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "FPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
