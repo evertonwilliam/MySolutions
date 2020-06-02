@@ -1,276 +1,177 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections;
 using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ApiWindows
 {
     public partial class FPrincipal : Form
     {
-        #region INIT PROGRAM
+        Thread capThread;
+        IntPtr ultimaJanela = IntPtr.Zero;
+
+        // Fica escutando a tecla CTRL
+        [MTAThread]
+        private void OuvirTeclaAtalho()
+        {
+            while (true)
+            {
+                short keyState = Api.ApiWin32.GetAsyncKeyState(Api.ApiWin32.VK_CONTROL);
+                bool ctrlPressed = (((keyState >> 15) & 0x0001) == 0x0001);
+                if (ctrlPressed)
+                {
+                    Point point = Cursor.Position;
+                    IntPtr janela = CapturaJanela(point);
+
+                    if (Control.FromHandle(ultimaJanela) == null)
+                    {
+                        if (janela != ultimaJanela)
+                        {
+                            // clear old window
+                            MostraRetanguloJanela(ultimaJanela);
+                            // set new window
+                            ultimaJanela = janela;
+                            // paint new window
+                            MostraRetanguloJanela(ultimaJanela);
+                        }
+                        //DisplayWindowInfo(LastWindow);
+                    }
+
+                    TssThredInit.Text = "CTRL Pressionado " + ultimaJanela.ToString();
+                }
+                else
+                {
+                    // reset all done things from mouse_down and mouse_move ...
+                    MostraRetanguloJanela(ultimaJanela);
+                    ultimaJanela = IntPtr.Zero;
+
+                    //Cursor = Cursors.Default;
+                    //pictureBox.Image = imageList.Images[1];
+
+                    TssThredInit.Text = "Ouvindo Tecla";
+                }                
+            }
+        }
+
+        //
+        private IntPtr CapturaJanela(Point point)
+        {
+            //
+            IntPtr janelaInteira = Api.ApiWin32.WindowFromPoint(point);
+            if (janelaInteira == IntPtr.Zero)
+            {
+                return IntPtr.Zero;
+            }
+
+            //
+            bool janelaParaCliente = Api.ApiWin32.ScreenToClient(janelaInteira, ref point);
+            if (janelaParaCliente == false)
+            {
+                throw new Exception("Falha ao identificar ScreemClient");
+            }
+
+            //
+            IntPtr janelaFilha = Api.ApiWin32.ChildWindowFromPointEx(janelaInteira, point, 0);
+            if (janelaFilha == IntPtr.Zero)
+            {
+                return janelaInteira;
+            }
+
+            //
+            bool janelaVisivel = Api.ApiWin32.ClientToScreen(janelaInteira, ref point);
+            if (janelaVisivel == false)
+            {
+                throw new Exception("Falha ao identificar ClientToScreem");
+            }
+
+            IntPtr janelaPai = Api.ApiWin32.GetParent(janelaFilha);
+            bool ehJanelaFilha = Api.ApiWin32.IsChild(janelaPai, janelaFilha);
+            if (ehJanelaFilha == false)
+            {
+                return janelaFilha;
+            }
+
+            //
+            ArrayList WindowList = new ArrayList();
+            while (janelaFilha != IntPtr.Zero)
+            {
+                Rectangle rect = Api.ApiWin32.GetWindowRect(janelaFilha);
+                if (rect.Contains(point))
+                {
+                    WindowList.Add(janelaFilha);
+                }                   
+                janelaFilha = Api.ApiWin32.GetWindow(janelaFilha, (uint)Api.ApiWin32.GetWindow_Cmd.GW_CHILD);
+            }
+
+            //
+            int MinPixel = Api.ApiWin32.GetSystemMetrics((int)Api.ApiWin32.GetSystem_Metrics.SM_CYFULLSCREEN) * 
+                Api.ApiWin32.GetSystemMetrics((int)Api.ApiWin32.GetSystem_Metrics.SM_CXFULLSCREEN);
+
+            //
+            for (int i = 0; i < WindowList.Count; ++i)
+            {
+                Rectangle rect = Api.ApiWin32.GetWindowRect((IntPtr)WindowList[i]);
+                int ChildPixel = rect.Width * rect.Height;
+                if (ChildPixel < MinPixel)
+                {
+                    MinPixel = ChildPixel;
+                    janelaFilha = (IntPtr)WindowList[i];
+                }
+            }
+            return janelaFilha;
+        }
+
+        static void MostraRetanguloJanela(IntPtr window)
+        {
+            if (window != IntPtr.Zero)
+            {
+                // 
+                Rectangle WindowRect = Api.ApiWin32.GetWindowRect(window);
+
+                // 
+                IntPtr dc = Api.ApiWin32.GetWindowDC(window);
+
+                // 
+                Api.ApiGdi.SetROP2(dc, (int)Api.ApiGdi.RopMode.R2_NOT);
+
+                //
+                Color color = Color.FromArgb(255, 233, 100);
+                IntPtr Pen = Api.ApiGdi.CreatePen((int)Api.ApiGdi.PenStyles.PS_INSIDEFRAME, 1 *
+                    Api.ApiWin32.GetSystemMetrics((int)Api.ApiWin32.GetSystem_Metrics.SM_CYFULLSCREEN), (uint)color.ToArgb());
+
+                //
+                IntPtr OldPen = Api.ApiGdi.SelectObject(dc, Pen);
+                IntPtr OldBrush = Api.ApiGdi.SelectObject(dc, Api.ApiGdi.GetStockObject((int)Api.ApiGdi.StockObjects.NULL_BRUSH));
+                Api.ApiGdi.Rectangle(dc, 1, 1, WindowRect.Width, WindowRect.Height);
+
+                // 
+                Api.ApiGdi.SelectObject(dc, OldBrush);
+                Api.ApiGdi.SelectObject(dc, OldPen);
+
+                // 
+                Api.ApiWin32.ReleaseDC(window, dc);
+                Api.ApiGdi.DeleteObject(Pen);
+            }
+        }
+
+
+
+        // Inicializa programa
         public FPrincipal()
         {
             InitializeComponent();
         }
-        #endregion
 
-        #region IMPORTACAO WIN32 WINDOWS API
-
-        /*
-        * FUNCAO QUE IDENTIFICA UMA TECLA PRESSIONADA FORA DA GUI
-        */
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        private static extern short GetAsyncKeyState(int vKey);
-        
-        private const int VK_CONTROL = 0x11;    // ESC
-        
-        // Recupera uma alça na janela que contém o ponto especificado.
-        [DllImport("user32.dll")]
-        public static extern IntPtr WindowFromPoint(Point point);
-
-        // A função ScreenToClient converte as coordenadas de tela 
-        // de um ponto especificado na tela para coordenadas da área do cliente
-        [DllImport("user32.dll")]
-        public static extern bool ScreenToClient(IntPtr hWnd, ref Point point);
-
-        // Determina qual, se houver, das janelas da criança pertencentes à janela pai especificada
-        [DllImport("user32.dll")]
-        public static extern IntPtr ChildWindowFromPointEx(IntPtr hWndParent, Point pt, uint uFlags);
-
-        // A função ClientToScreen converte as coordenadas da área do cliente de um ponto especificado 
-        // para coordenadas de tela
-        [DllImport("user32.dll")]
-        public static extern bool ClientToScreen(IntPtr hwnd, ref Point lpPoint);
-
-        // Retorna o objeto pai do objeto especificado processando a árvore lógica
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetParent(IntPtr hWnd);
-
-        // Determina se uma janela é uma janela filho ou uma janela descendente de uma janela de pai especificada.
-        [DllImport("user32.dll")]
-        public static extern bool IsChild(IntPtr hWndParent, IntPtr hWnd);
-
-        /*
-         * GW_HWNDFIRST = 0 - identificador recuperado identifica a janela do mesmo tipo que é mais baixa na ordem Z
-         * GW_HWNDLAST = 1 - O identificador recuperado identifica a janela abaixo da janela especificada na ordem Z
-         * GW_HWNDNEXT = 2 - O identificador recuperado identifica a janela acima da janela especificada na ordem Z
-         * GW_HWNDPREV = 3 - O identificador recuperado identifica a janela do proprietário da janela especificada, se houver
-         * GW_OWNER = 4 - O identificador recuperado identifica a janela filho na parte superior da ordem Z
-         * GW_CHILD = 5 - O identificador recuperado identifica a janela pop-up ativada pertencente à janela especificada 
-         * GW_ENABLEDPOPUP = 6 - Habilita acesso a popup
-         */
-        public enum GetWindow_Cmd : uint
+        private void FPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {
-            GW_HWNDFIRST = 0,
-            GW_HWNDLAST = 1,
-            GW_HWNDNEXT = 2,
-            GW_HWNDPREV = 3,
-            GW_OWNER = 4,
-            GW_CHILD = 5,
-            GW_ENABLEDPOPUP = 6
-        }
-        /* Recupera um identificador para uma janela que possui o relacionamento especificado (Z-Order ou proprietário) 
-         *para a janela especificada.
-         */
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
-
-        /*
-         * public int Left; // x posição do canto superior esquerdo
-         * public int Top; // y posição do canto superior esquerdo
-         * public int Right; // x posição do canto inferior direito
-         * public int Bottom; // posição do canto inferior direito
-         */
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-            public Rectangle ToRectangle()
-            {
-                return new Rectangle(Left, Top, Right - Left, Bottom - Top);
-            }
-        }
-        // Captura o retangulo da tela
-        [DllImport("user32.dll")]
-        public static extern bool GetWindowRect(IntPtr hWnd, ref RECT lpRect);
-
-        // função auxiliar retorna diretamente um objeto Rectangle
-        public static Rectangle GetWindowRect(IntPtr hWnd)
-        {
-            Debug.Assert(hWnd != IntPtr.Zero);
-            RECT rect = new RECT();
-            if (GetWindowRect(hWnd, ref rect) == false)
-                throw new Exception("Falha ao Acessar Tela");
-            return rect.ToRectangle();
+            capThread.Abort();
         }
 
-        /*
-         * A função GetWindowDC recupera o contexto do dispositivo (DC) para toda a janela, 
-         * incluindo barra de título, menus e barras de rolagem. 
-         * Um contexto de dispositivo de janela permite pintar em qualquer lugar de uma janela, 
-         * porque a origem do contexto do dispositivo é o canto superior esquerdo da janela 
-         * em vez da área do cliente. GetWindowDC atribui atributos padrão ao contexto 
-         * do dispositivo de janela cada vez que recupera o contexto do dispositivo. 
-         * Atributos anteriores são perdidos.
-         */
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetWindowDC(IntPtr hWnd);
-
-        /*
-         * recupera quantos caracteres tem a tela
-         */
-        [DllImport("user32.dll")]
-        public static extern int GetWindowTextLength(IntPtr hWnd);
-
-        /*
-         * recupera o valor do texto da janela
-         */
-        [DllImport("user32.dll")]
-        public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
-        // função auxiliar retorna diretamente o texto da tela
-        public static string GetWindowText(IntPtr hWnd)
+        private void FPrincipal_Load(object sender, EventArgs e)
         {
-            Debug.Assert(hWnd != IntPtr.Zero);
-            StringBuilder WindowText = new StringBuilder(GetWindowTextLength(hWnd) + 1);
-            GetWindowText(hWnd, WindowText, WindowText.Capacity);
-            return WindowText.ToString();
+            capThread = new Thread(OuvirTeclaAtalho);
+            capThread.Start();
         }
-
-        /*
-         * Retorna o nome da classe para o componente especificado.
-         */
-        [DllImport("user32.dll")]
-        public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
-
-        // função auxiliar retorna o nome da classe
-        public static string GetClassName(IntPtr hWnd)
-        {
-            StringBuilder ClassName = new StringBuilder(256);
-            int ret = GetClassName(hWnd, ClassName, ClassName.Capacity);
-            return ClassName.ToString();
-        }
-
-        /*
-         * Libera um contexto de dispositivo, liberando-o para uso por outros aplicativos
-         */
-        [DllImport("user32.dll")]
-        public static extern Int32 ReleaseDC(IntPtr hWnd, IntPtr hdc);
-
-        /*
-         * Capturando o objeto em focus()
-         */
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Winapi)]
-        internal static extern IntPtr GetFocus();
-
-        private Control GetFocusedControl(IntPtr window)
-        {
-            Control focusedControl;
-            window = GetFocus();
-            focusedControl = null;
-
-            if (window != IntPtr.Zero)
-            {
-                focusedControl = Control.FromHandle(window);
-                return focusedControl;
-            }
-            return focusedControl;
-        }
-
-        #endregion
-
-        #region IMPORTACAO GDI WINDOWS API
-        // IMPLEMENTATION
-        #endregion
-
-        #region EVENTOS DA TELA
-
-        public void Screen()
-        {
-            #region utilizando as funcoes win32
-
-            Point point = Cursor.Position;
-            IntPtr windowPoint = WindowFromPoint(point); // Posição da tela.
-            bool screemToClient = ScreenToClient(windowPoint, ref point); // Tela para Cliente?
-            IntPtr window = ChildWindowFromPointEx(windowPoint, point, 0);
-            bool clientToScreem = ClientToScreen(windowPoint, ref point);
-            IntPtr parentWindow = GetParent(window);
-            bool isChild = IsChild(parentWindow, window);
-            IntPtr newWindow = GetWindow(window, (uint)GetWindow_Cmd.GW_HWNDNEXT);
-            var rectangle = GetWindowRect(window);
-            IntPtr dc = GetWindowDC(window);
-            int length = GetWindowTextLength(window);
-            string textWindow = GetWindowText(window);
-            string className = GetClassName(window);
-            Control focus = GetFocusedControl(newWindow);
-
-
-            // AMBIENTE VISUAL
-            TxtMousePosition.Text = point.ToString();
-            TxtWindowPoint.Text = windowPoint.ToString();
-            TxtScreemToClient.Text = screemToClient.ToString();
-            TxtWindow.Text = window.ToString();
-            TxtClientToScreem.Text = clientToScreem.ToString();
-            TxtParentWindow.Text = parentWindow.ToString();
-            TxtIsChild.Text = isChild.ToString();
-            TxtGetWindow.Text = newWindow.ToString();
-            TxtRectangle.Text = rectangle.ToString();
-            TxtContextoDC.Text = dc.ToString();
-            TxtLenght.Text = length.ToString();
-            txtTextWindow.Text = textWindow;
-            TxtClassName.Text = className;
-            TxtControlFocus.Text = focus.Name;
-
-            #endregion
-
-
-
-            // libere o contexto do dispositivo e destrua a caneta
-            ReleaseDC(window, dc);
-
-        }
-
-        // CLICAR EM SAIR
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
-
-        // AO PRESSIONAR A TELA CTRL
-        private void FPrincipal_KeyDown(object sender, KeyEventArgs e)
-        {
-            /*
-            if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
-            {
-                Screen();
-            }*/
-        }
-
-        // Ao soltar a tecla CTRL
-        private void FPrincipal_KeyUp(object sender, KeyEventArgs e)
-        {
-            // libere o contexto do dispositivo e destrua a caneta
-            //ReleaseDC(window, dc);
-        }
-
-        private void TListemKey_Tick(object sender, EventArgs e)
-        {
-            short keyState = GetAsyncKeyState(VK_CONTROL);
-            bool ctrlIsPressed = ((keyState >> 15) & 0x0001) == 0x0001;
-            //bool escUnProcessedPress = ((keyState >> 0) & 0x0001) == 0x0001;
-
-            if (ctrlIsPressed)
-            {
-                Screen();
-            }
-        }
-
-        #endregion
-
-
     }
 }

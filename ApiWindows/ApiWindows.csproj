@@ -67,6 +67,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api\ApiGdi.cs" />
+    <Compile Include="Api\ApiWin32.cs" />
     <Compile Include="FPrincipal.cs">
       <SubType>Form</SubType>
     </Compile>

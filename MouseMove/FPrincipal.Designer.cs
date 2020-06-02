@@ -36,6 +36,8 @@
             this.SStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SStatusTecla = new System.Windows.Forms.ToolStripStatusLabel();
             this.BExit = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.TxtUrl = new System.Windows.Forms.TextBox();
             this.SStatus.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -100,11 +102,29 @@
             this.BExit.UseVisualStyleBackColor = true;
             this.BExit.Click += new System.EventHandler(this.BExit_Click);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(0, 154);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(64, 17);
+            this.label1.TabIndex = 6;
+            this.label1.Text = "URL-Get";
+            // 
+            // TxtUrl
+            // 
+            this.TxtUrl.Location = new System.Drawing.Point(3, 175);
+            this.TxtUrl.Name = "TxtUrl";
+            this.TxtUrl.Size = new System.Drawing.Size(439, 22);
+            this.TxtUrl.TabIndex = 7;
+            // 
             // FPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(620, 231);
+            this.Controls.Add(this.TxtUrl);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.SStatus);
             this.Controls.Add(this.BExit);
             this.Controls.Add(this.LQuantidadeVezes);
@@ -131,6 +151,8 @@
         private System.Windows.Forms.ToolStripStatusLabel SStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel SStatusTecla;
         private System.Windows.Forms.Button BExit;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox TxtUrl;
     }
 }
 
